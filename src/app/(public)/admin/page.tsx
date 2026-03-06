@@ -28,6 +28,47 @@ export default function AdminDashboard() {
     { label: 'Ingresos totales', value: stats ? formatPrice(stats.totalRevenue ?? 0) : '-', icon: CurrencyDollarIcon, color: 'bg-green-50 text-green-600', href: '/admin/pedidos' },
   ];
 
+  const quickActions = [
+    {
+      href: '/admin/productos/nuevo',
+      label: 'Nuevo producto',
+      sub: 'Agregar al catálogo',
+      icon: ShoppingBagIcon,
+      cls: 'bg-primary-600 hover:bg-primary-700 text-white',
+      iconCls: 'bg-white/20',
+      subCls: 'text-primary-100',
+    },
+    {
+      href: '/admin/categorias/nueva',
+      label: 'Nueva categoría',
+      sub: 'Organizar productos',
+      icon: TagIcon,
+      cls: 'bg-emerald-600 hover:bg-emerald-700 text-white',
+      iconCls: 'bg-white/20',
+      subCls: 'text-emerald-100',
+    },
+    {
+      href: '/admin/pedidos',
+      label: 'Gestionar pedidos',
+      sub: 'Ver y actualizar estados',
+      icon: ClipboardDocumentListIcon,
+      cls: 'bg-white border border-gray-100 shadow-sm hover:shadow-md text-gray-900',
+      iconCls: 'bg-yellow-50',
+      iconColor: 'text-yellow-500',
+      subCls: 'text-gray-400',
+    },
+    {
+      href: '/admin/usuarios',
+      label: 'Ver usuarios',
+      sub: 'Listado de clientes',
+      icon: UsersIcon,
+      cls: 'bg-white border border-gray-100 shadow-sm hover:shadow-md text-gray-900',
+      iconCls: 'bg-purple-50',
+      iconColor: 'text-purple-500',
+      subCls: 'text-gray-400',
+    },
+  ];
+
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
@@ -50,50 +91,19 @@ export default function AdminDashboard() {
 
       {/* Acciones rápidas */}
       <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Acciones rápidas</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <Link href="/admin/productos/nuevo"
-          className="bg-primary-600 text-white rounded-2xl p-5 flex items-center gap-4 hover:bg-primary-700 transition-colors">
-          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
-            <ShoppingBagIcon className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="font-bold">Nuevo producto</p>
-            <p className="text-primary-100 text-xs mt-0.5">Agregar al catálogo</p>
-          </div>
-        </Link>
-
-        <Link href="/admin/categorias/nueva"
-          className="bg-emerald-600 text-white rounded-2xl p-5 flex items-center gap-4 hover:bg-emerald-700 transition-colors">
-          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
-            <TagIcon className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="font-bold">Nueva categoría</p>
-            <p className="text-emerald-100 text-xs mt-0.5">Organizar productos</p>
-          </div>
-        </Link>
-
-        <Link href="/admin/pedidos"
-          className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4 hover:shadow-md transition-shadow">
-          <div className="w-10 h-10 bg-yellow-50 rounded-xl flex items-center justify-center shrink-0">
-            <ClipboardDocumentListIcon className="w-5 h-5 text-yellow-500" />
-          </div>
-          <div>
-            <p className="font-bold text-gray-900">Gestionar pedidos</p>
-            <p className="text-gray-400 text-xs mt-0.5">Ver y actualizar estados</p>
-          </div>
-        </Link>
-
-        <Link href="/admin/usuarios"
-          className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4 hover:shadow-md transition-shadow">
-          <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center shrink-0">
-            <UsersIcon className="w-5 h-5 text-purple-500" />
-          </div>
-          <div>
-            <p className="font-bold text-gray-900">Ver usuarios</p>
-            <p className="text-gray-400 text-xs mt-0.5">Listado de clientes</p>
-          </div>
-        </Link>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {quickActions.map((a) => (
+          <Link key={a.href} href={a.href}
+            className={`rounded-2xl p-4 flex items-center gap-3 transition-all ${a.cls}`}>
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${a.iconCls}`}>
+              <a.icon className={`w-5 h-5 ${a.iconColor ?? ''}`} />
+            </div>
+            <div className="min-w-0">
+              <p className="font-bold text-sm leading-tight">{a.label}</p>
+              <p className={`text-xs mt-0.5 truncate ${a.subCls}`}>{a.sub}</p>
+            </div>
+          </Link>
+        ))}
       </div>
     </div>
   );
