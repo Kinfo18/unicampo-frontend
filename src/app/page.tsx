@@ -1,16 +1,16 @@
 import PublicLayout from "@/components/layout/PublicLayout";
+import HeroSection from "@/components/home/HeroSection";
+import CategoriesSection from "@/components/home/CategoriesSection";
+import FeaturedProductsSection from "@/components/home/FeaturedProductsSection";
+import TrustBanner from "@/components/home/TrustBanner";
 
 export default function HomePage() {
   return (
     <PublicLayout>
-      <div className="max-w-7xl mx-auto px-4 py-20 text-center">
-        <h1 className="text-4xl font-bold text-primary-700 mb-4">
-          🌿 Bienvenido a Unicampo
-        </h1>
-        <p className="text-gray-500 text-lg">
-          Productos agrícolas frescos del campo a tu puerta.
-        </p>
-      </div>
+      <HeroSection />
+      <CategoriesSection />
+      <FeaturedProductsSection />
+      <TrustBanner />
     </PublicLayout>
   );
 }
