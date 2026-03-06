@@ -5,7 +5,7 @@ const api = axios.create({
     headers: { 'Content-Type': 'application/json' },
 });
 
-// Interceptor: agrega el token JWT automáticamente a cada petición
+// Interceptor: agrega el token JWT automáticamente
 api.interceptors.request.use((config) => {
     if (typeof window !== 'undefined') {
         const token = localStorage.getItem('unicampo_token');
@@ -16,19 +16,11 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
-// Interceptor: maneja errores globalmente
+// Interceptor: rechaza el error para que cada componente lo maneje
+// No redirigimos automáticamente para evitar recargas que borran el store
 api.interceptors.response.use(
     (response) => response,
-    (error) => {
-        if (error.response?.status === 401) {
-            if (typeof window !== 'undefined') {
-                localStorage.removeItem('unicampo_token');
-                localStorage.removeItem('unicampo_user');
-                window.location.href = '/auth/login';
-            }
-        }
-        return Promise.reject(error);
-    },
+    (error) => Promise.reject(error),
 );
 
 export default api;
