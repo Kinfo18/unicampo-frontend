@@ -1,8 +1,6 @@
-import dynamic from 'next/dynamic';
 import PublicLayout from '@/components/layout/PublicLayout';
 import Link from 'next/link';
-
-const RegisterForm = dynamic(() => import('./RegisterForm'), { ssr: false });
+import RegisterFormWrapper from './RegisterFormWrapper';
 
 export default function RegisterPage() {
   return (
@@ -20,7 +18,7 @@ export default function RegisterPage() {
           </div>
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-            <RegisterForm />
+            <RegisterFormWrapper />
           </div>
 
           <p className="text-center text-sm text-gray-500 mt-6">
