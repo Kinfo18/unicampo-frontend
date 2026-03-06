@@ -41,7 +41,7 @@ export default function AdminPedidosPage() {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: '15' });
     if (statusFilter) params.set('status', statusFilter);
-    api.get(`/orders?${params}`)
+    api.get(`/orders/admin/all?${params}`)
       .then((r) => {
         setOrders(r.data.data);
         setMeta(r.data.meta);
@@ -149,7 +149,6 @@ export default function AdminPedidosPage() {
                         }`}>▾</span>
                       </td>
                     </tr>
-
                     {expanded === order.id && (
                       <tr>
                         <td colSpan={6} className="bg-gray-50 px-6 py-4">
@@ -183,7 +182,6 @@ export default function AdminPedidosPage() {
               </tbody>
             </table>
           </div>
-
           {meta.totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
               <p className="text-sm text-gray-400">Página {meta.page} de {meta.totalPages}</p>
