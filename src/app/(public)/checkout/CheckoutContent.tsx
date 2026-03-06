@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -23,19 +23,16 @@ export default function CheckoutContent() {
   const [form, setForm] = useState({ shippingAddress: '', notes: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Flag para evitar que el guard redirija cuando nosotros vaciamos el carrito
+  const submittingRef = useRef(false);
 
-  // Esperar a que Zustand hidrate antes de evaluar el guard
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     if (!mounted) return;
-    if (!isAuthenticated) {
-      router.push('/auth/login');
-      return;
-    }
-    if (items.length === 0) {
+    if (!isAuthenticated) { router.push('/auth/login'); return; }
+    // Solo redirigir al carrito si NO estamos procesando el pedido
+    if (items.length === 0 && !submittingRef.current) {
       router.push('/carrito');
     }
   }, [mounted, isAuthenticated, items.length]);
@@ -55,16 +52,18 @@ export default function CheckoutContent() {
     }
     setLoading(true);
     setError(null);
+    submittingRef.current = true; // bloquear el guard
     try {
-      // El interceptor de api.ts agrega el token automáticamente desde localStorage
       const res = await api.post('/orders', {
         items: items.map((i) => ({ productId: i.product.id, quantity: i.quantity })),
         shippingAddress: form.shippingAddress,
         notes: form.notes || undefined,
       });
-      clearCart();
-      router.push(`/checkout/confirmacion?orderId=${res.data.id}`);
+      const orderId = res.data.id;
+      clearCart(); // vaciar carrito ANTES de navegar
+      router.push(`/checkout/confirmacion?orderId=${orderId}`);
     } catch (err: any) {
+      submittingRef.current = false; // liberar guard si falla
       const msg = err.response?.data?.message;
       setError(Array.isArray(msg) ? msg[0] : msg ?? 'Error al procesar el pedido. Inténtalo de nuevo.');
     } finally {
@@ -74,7 +73,6 @@ export default function CheckoutContent() {
 
   const subtotal = getTotalPrice();
 
-  // Mostrar skeleton mientras hidrata
   if (!mounted) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -90,12 +88,11 @@ export default function CheckoutContent() {
     );
   }
 
-  if (!isAuthenticated || items.length === 0) return null;
+  if (!isAuthenticated) return null;
+  if (items.length === 0 && !submittingRef.current) return null;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-
-      {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-gray-400 mb-8">
         <Link href="/" className="hover:text-primary-600">Inicio</Link>
         <span>/</span>
@@ -105,24 +102,18 @@ export default function CheckoutContent() {
       </nav>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-        {/* Formulario */}
         <div className="lg:col-span-2">
           <form onSubmit={handleSubmit} className="space-y-6">
-
-            {/* Dirección */}
             <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
               <div className="flex items-center gap-2 mb-5">
                 <MapPinIcon className="w-5 h-5 text-primary-600" />
                 <h2 className="text-lg font-bold text-gray-900">Dirección de entrega</h2>
               </div>
-
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl mb-4">
                   {error}
                 </div>
               )}
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   Dirección completa <span className="text-red-500">*</span>
@@ -138,7 +129,6 @@ export default function CheckoutContent() {
               </div>
             </div>
 
-            {/* Notas */}
             <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
                 <ClipboardDocumentListIcon className="w-5 h-5 text-primary-600" />
@@ -154,13 +144,9 @@ export default function CheckoutContent() {
               />
             </div>
 
-            {/* Botón móvil */}
             <div className="lg:hidden">
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-primary-600 text-white font-semibold py-3.5 rounded-xl hover:bg-primary-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
-              >
+              <button type="submit" disabled={loading}
+                className="w-full bg-primary-600 text-white font-semibold py-3.5 rounded-xl hover:bg-primary-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
                 {loading
                   ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Procesando...</>
                   : <><LockClosedIcon className="w-4 h-4" /> Confirmar pedido</>}
@@ -169,7 +155,6 @@ export default function CheckoutContent() {
           </form>
         </div>
 
-        {/* Resumen */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm sticky top-24">
             <div className="flex items-center gap-2 mb-5">
@@ -182,11 +167,9 @@ export default function CheckoutContent() {
               {items.map(({ product, quantity }) => (
                 <div key={product.id} className="flex items-center gap-3">
                   <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-primary-50 shrink-0">
-                    {product.images?.[0] ? (
-                      <Image src={product.images[0]} alt={product.name} fill className="object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-xl">🌿</div>
-                    )}
+                    {product.images?.[0]
+                      ? <Image src={product.images[0]} alt={product.name} fill className="object-cover" />
+                      : <div className="w-full h-full flex items-center justify-center text-xl">🌿</div>}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-800 truncate">{product.name}</p>
@@ -214,12 +197,8 @@ export default function CheckoutContent() {
               </div>
             </div>
 
-            {/* Botón desktop */}
-            <button
-              onClick={() => handleSubmit()}
-              disabled={loading}
-              className="hidden lg:flex w-full bg-primary-600 text-white font-semibold py-3.5 rounded-xl hover:bg-primary-700 transition-colors disabled:opacity-60 items-center justify-center gap-2"
-            >
+            <button onClick={() => handleSubmit()} disabled={loading}
+              className="hidden lg:flex w-full bg-primary-600 text-white font-semibold py-3.5 rounded-xl hover:bg-primary-700 transition-colors disabled:opacity-60 items-center justify-center gap-2">
               {loading
                 ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Procesando...</>
                 : <><LockClosedIcon className="w-4 h-4" /> Confirmar pedido</>}
