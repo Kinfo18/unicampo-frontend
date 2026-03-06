@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   HomeIcon,
   ShoppingBagIcon,
+  TagIcon,
   ClipboardDocumentListIcon,
   UsersIcon,
   ArrowRightOnRectangleIcon,
@@ -17,6 +18,7 @@ import { useAuthStore } from '@/store/auth.store';
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: HomeIcon, exact: true },
   { href: '/admin/productos', label: 'Productos', icon: ShoppingBagIcon },
+  { href: '/admin/categorias', label: 'Categorías', icon: TagIcon },
   { href: '/admin/pedidos', label: 'Pedidos', icon: ClipboardDocumentListIcon },
   { href: '/admin/usuarios', label: 'Usuarios', icon: UsersIcon },
 ];
