@@ -1,13 +1,12 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, Fragment } from 'react';
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
   FunnelIcon,
 } from '@heroicons/react/24/outline';
 import api from '@/lib/api';
-import OrderStatusBadge from '@/components/ui/OrderStatusBadge';
 import OrderStatusSelect from '@/components/ui/OrderStatusSelect';
 
 const STATUS_FILTERS = [
@@ -52,8 +51,6 @@ export default function AdminPedidosPage() {
   }, [page, statusFilter]);
 
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
-
-  // Reset a página 1 al cambiar filtro
   useEffect(() => { setPage(1); }, [statusFilter]);
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
@@ -78,7 +75,6 @@ export default function AdminPedidosPage() {
 
   return (
     <div>
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Pedidos</h1>
@@ -90,7 +86,7 @@ export default function AdminPedidosPage() {
       <div className="flex items-center gap-2 mb-5 flex-wrap">
         <FunnelIcon className="w-4 h-4 text-gray-400 shrink-0" />
         {STATUS_FILTERS.map((f) => (
-          <button key={f.value}
+          <button key={f.value || 'all'}
             onClick={() => setStatusFilter(f.value)}
             className={`px-3.5 py-1.5 rounded-xl text-sm font-medium transition-colors ${
               statusFilter === f.value
@@ -102,7 +98,6 @@ export default function AdminPedidosPage() {
         ))}
       </div>
 
-      {/* Tabla */}
       {loading ? (
         <div className="space-y-3">
           {[1,2,3,4,5].map((i) => <div key={i} className="h-16 bg-gray-100 rounded-2xl animate-pulse" />)}
@@ -127,8 +122,8 @@ export default function AdminPedidosPage() {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {orders.map((order) => (
-                  <>
-                    <tr key={order.id}
+                  <Fragment key={order.id}>
+                    <tr
                       className="hover:bg-gray-50 transition-colors cursor-pointer"
                       onClick={() => setExpanded(expanded === order.id ? null : order.id)}>
                       <td className="px-4 py-3">
@@ -148,19 +143,17 @@ export default function AdminPedidosPage() {
                           onChange={(val) => handleStatusChange(order.id, val)}
                         />
                       </td>
-                      <td className="px-4 py-3">
-                        <span className={`text-gray-400 transition-transform inline-block ${
+                      <td className="px-4 py-3 text-center">
+                        <span className={`text-gray-400 inline-block transition-transform ${
                           expanded === order.id ? 'rotate-180' : ''
                         }`}>▾</span>
                       </td>
                     </tr>
 
-                    {/* Detalle expandible */}
                     {expanded === order.id && (
-                      <tr key={`${order.id}-detail`}>
+                      <tr>
                         <td colSpan={6} className="bg-gray-50 px-6 py-4">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* Productos */}
                             <div>
                               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Productos</p>
                               <div className="space-y-2">
@@ -174,7 +167,6 @@ export default function AdminPedidosPage() {
                                 ))}
                               </div>
                             </div>
-                            {/* Info envio */}
                             <div>
                               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Dirección de envío</p>
                               <p className="text-sm text-gray-700">{order.shippingAddress}</p>
@@ -186,18 +178,15 @@ export default function AdminPedidosPage() {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 ))}
               </tbody>
             </table>
           </div>
 
-          {/* Paginación */}
           {meta.totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-              <p className="text-sm text-gray-400">
-                Página {meta.page} de {meta.totalPages}
-              </p>
+              <p className="text-sm text-gray-400">Página {meta.page} de {meta.totalPages}</p>
               <div className="flex gap-2">
                 <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
                   className="p-2 rounded-xl border border-gray-200 hover:bg-gray-50 disabled:opacity-40 transition-colors">
