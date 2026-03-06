@@ -17,16 +17,28 @@ import { useAuthStore } from '@/store/auth.store';
 export default function CheckoutContent() {
   const router = useRouter();
   const { items, getTotalPrice, clearCart } = useCartStore();
-  const { isAuthenticated, token } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
 
+  const [mounted, setMounted] = useState(false);
   const [form, setForm] = useState({ shippingAddress: '', notes: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Esperar a que Zustand hidrate antes de evaluar el guard
   useEffect(() => {
-    if (!isAuthenticated) router.push('/auth/login');
-    if (items.length === 0) router.push('/carrito');
-  }, [isAuthenticated, items.length]);
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    if (!isAuthenticated) {
+      router.push('/auth/login');
+      return;
+    }
+    if (items.length === 0) {
+      router.push('/carrito');
+    }
+  }, [mounted, isAuthenticated, items.length]);
 
   const formatPrice = (value: number) =>
     new Intl.NumberFormat('es-CO', {
@@ -35,8 +47,8 @@ export default function CheckoutContent() {
       minimumFractionDigits: 0,
     }).format(value);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!form.shippingAddress.trim()) {
       setError('La dirección de entrega es obligatoria');
       return;
@@ -44,26 +56,39 @@ export default function CheckoutContent() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.post(
-        '/orders',
-        {
-          items: items.map((i) => ({ productId: i.product.id, quantity: i.quantity })),
-          shippingAddress: form.shippingAddress,
-          notes: form.notes || undefined,
-        },
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
+      // El interceptor de api.ts agrega el token automáticamente desde localStorage
+      const res = await api.post('/orders', {
+        items: items.map((i) => ({ productId: i.product.id, quantity: i.quantity })),
+        shippingAddress: form.shippingAddress,
+        notes: form.notes || undefined,
+      });
       clearCart();
       router.push(`/checkout/confirmacion?orderId=${res.data.id}`);
     } catch (err: any) {
       const msg = err.response?.data?.message;
-      setError(Array.isArray(msg) ? msg[0] : msg ?? 'Error al procesar el pedido');
+      setError(Array.isArray(msg) ? msg[0] : msg ?? 'Error al procesar el pedido. Inténtalo de nuevo.');
     } finally {
       setLoading(false);
     }
   };
 
   const subtotal = getTotalPrice();
+
+  // Mostrar skeleton mientras hidrata
+  if (!mounted) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="h-8 w-48 bg-gray-100 rounded-xl animate-pulse mb-8" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-4">
+            <div className="h-48 bg-gray-100 rounded-2xl animate-pulse" />
+            <div className="h-32 bg-gray-100 rounded-2xl animate-pulse" />
+          </div>
+          <div className="h-64 bg-gray-100 rounded-2xl animate-pulse" />
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated || items.length === 0) return null;
 
@@ -98,26 +123,24 @@ export default function CheckoutContent() {
                 </div>
               )}
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Dirección completa <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={form.shippingAddress}
-                    onChange={(e) => setForm((p) => ({ ...p, shippingAddress: e.target.value }))}
-                    required
-                    placeholder="Ej: Calle 123 # 45-67, Bogotá"
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Dirección completa <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={form.shippingAddress}
+                  onChange={(e) => setForm((p) => ({ ...p, shippingAddress: e.target.value }))}
+                  required
+                  placeholder="Ej: Calle 123 # 45-67, Bogotá"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                />
               </div>
             </div>
 
             {/* Notas */}
             <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-              <div className="flex items-center gap-2 mb-5">
+              <div className="flex items-center gap-2 mb-4">
                 <ClipboardDocumentListIcon className="w-5 h-5 text-primary-600" />
                 <h2 className="text-lg font-bold text-gray-900">Notas del pedido</h2>
                 <span className="text-xs text-gray-400">(opcional)</span>
@@ -131,18 +154,16 @@ export default function CheckoutContent() {
               />
             </div>
 
-            {/* Botón submit móvil */}
+            {/* Botón móvil */}
             <div className="lg:hidden">
               <button
                 type="submit"
                 disabled={loading}
                 className="w-full bg-primary-600 text-white font-semibold py-3.5 rounded-xl hover:bg-primary-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
               >
-                {loading ? (
-                  <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Procesando...</>
-                ) : (
-                  <><LockClosedIcon className="w-4 h-4" /> Confirmar pedido</>
-                )}
+                {loading
+                  ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Procesando...</>
+                  : <><LockClosedIcon className="w-4 h-4" /> Confirmar pedido</>}
               </button>
             </div>
           </form>
@@ -154,10 +175,9 @@ export default function CheckoutContent() {
             <div className="flex items-center gap-2 mb-5">
               <ShoppingBagIcon className="w-5 h-5 text-primary-600" />
               <h2 className="text-lg font-bold text-gray-900">Tu pedido</h2>
-              <span className="text-xs text-gray-400">({items.length} productos)</span>
+              <span className="text-xs text-gray-400">({items.length} {items.length === 1 ? 'producto' : 'productos'})</span>
             </div>
 
-            {/* Items */}
             <div className="space-y-3 mb-5 max-h-64 overflow-y-auto pr-1">
               {items.map(({ product, quantity }) => (
                 <div key={product.id} className="flex items-center gap-3">
@@ -179,7 +199,6 @@ export default function CheckoutContent() {
               ))}
             </div>
 
-            {/* Totales */}
             <div className="space-y-2 border-t border-gray-100 pt-4 mb-5">
               <div className="flex justify-between text-sm text-gray-600">
                 <span>Subtotal</span>
@@ -197,20 +216,18 @@ export default function CheckoutContent() {
 
             {/* Botón desktop */}
             <button
-              onClick={handleSubmit as any}
+              onClick={() => handleSubmit()}
               disabled={loading}
               className="hidden lg:flex w-full bg-primary-600 text-white font-semibold py-3.5 rounded-xl hover:bg-primary-700 transition-colors disabled:opacity-60 items-center justify-center gap-2"
             >
-              {loading ? (
-                <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Procesando...</>
-              ) : (
-                <><LockClosedIcon className="w-4 h-4" /> Confirmar pedido</>
-              )}
+              {loading
+                ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Procesando...</>
+                : <><LockClosedIcon className="w-4 h-4" /> Confirmar pedido</>}
             </button>
 
             <div className="flex items-center justify-center gap-1 mt-3 text-xs text-gray-400">
               <LockClosedIcon className="w-3.5 h-3.5" />
-              <span>Pago seguro y encriptado</span>
+              <span>Compra simulada — sin cobro real</span>
             </div>
           </div>
         </div>
