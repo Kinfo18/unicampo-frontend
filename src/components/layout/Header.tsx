@@ -15,8 +15,8 @@ import {
 
 const navLinks = [
   { href: "/", label: "Inicio" },
-  { href: "/products", label: "Productos" },
-  { href: "/categories", label: "Categorías" },
+  { href: "/productos", label: "Productos" },
+  { href: "/categorias", label: "Categorías" },
 ];
 
 export default function Header() {

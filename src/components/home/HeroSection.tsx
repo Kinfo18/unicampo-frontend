@@ -35,13 +35,13 @@ export default function HeroSection() {
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-3">
             <Link
-              href="/products"
+              href="/productos"
               className="inline-flex items-center justify-center gap-2 bg-white text-primary-700 font-semibold px-6 py-3 rounded-xl hover:bg-primary-50 transition-colors shadow-lg"
             >
               🛒 Ver productos
             </Link>
             <Link
-              href="/categories"
+              href="/categorias"
               className="inline-flex items-center justify-center gap-2 bg-white/15 backdrop-blur-sm text-white font-semibold px-6 py-3 rounded-xl border border-white/30 hover:bg-white/25 transition-colors"
             >
               📦 Ver categorías

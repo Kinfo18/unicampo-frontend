@@ -25,9 +25,9 @@ export default function Footer() {
             <ul className="space-y-2">
               {[
                 { href: "/", label: "Inicio" },
-                { href: "/products", label: "Productos" },
-                { href: "/categories", label: "Categorías" },
-                { href: "/cart", label: "Carrito" },
+                { href: "/productos", label: "Productos" },
+                { href: "/categorias", label: "Categorías" },
+                { href: "/carrito", label: "Carrito" },
               ].map((link) => (
                 <li key={link.href}>
                   <Link
@@ -50,8 +50,8 @@ export default function Footer() {
               {[
                 { href: "/auth/login", label: "Iniciar sesión" },
                 { href: "/auth/register", label: "Registrarse" },
-                { href: "/account", label: "Mi perfil" },
-                { href: "/account/orders", label: "Mis pedidos" },
+                { href: "/cuenta", label: "Mi perfil" },
+                { href: "/pedidos", label: "Mis pedidos" },
               ].map((link) => (
                 <li key={link.href}>
                   <Link

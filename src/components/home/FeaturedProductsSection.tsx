@@ -32,7 +32,7 @@ export default function FeaturedProductsSection() {
             </h2>
           </div>
           <Link
-            href="/products"
+            href="/productos" // botón "Ver todos"
             className="hidden sm:block text-sm text-primary-600 hover:text-primary-700 font-medium"
           >
             Ver todos →
@@ -67,7 +67,7 @@ export default function FeaturedProductsSection() {
         {/* Ver todos móvil */}
         <div className="sm:hidden mt-6 text-center">
           <Link
-            href="/products"
+            href="/productos"
             className="text-sm text-primary-600 font-medium"
           >
             Ver todos los productos →

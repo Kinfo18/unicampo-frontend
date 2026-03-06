@@ -47,7 +47,7 @@ export default function CategoriesSection() {
             </h2>
           </div>
           <Link
-            href="/categories"
+            href="/categorias"
             className="hidden sm:block text-sm text-primary-600 hover:text-primary-700 font-medium"
           >
             Ver todas →
@@ -73,7 +73,7 @@ export default function CategoriesSection() {
             {categories.map((category) => (
               <Link
                 key={category.id}
-                href={`/products?categoryId=${category.id}`}
+                href={`/productos?categoryId=${category.id}`}
                 className="group flex flex-col items-center justify-center gap-2 p-4 bg-primary-50 hover:bg-primary-100 rounded-2xl border border-primary-100 hover:border-primary-300 transition-all hover:shadow-md hover:-translate-y-0.5"
               >
                 <span className="text-4xl group-hover:scale-110 transition-transform">
@@ -90,7 +90,7 @@ export default function CategoriesSection() {
         {/* Ver todas móvil */}
         <div className="sm:hidden mt-6 text-center">
           <Link
-            href="/categories"
+            href="/categorias"
             className="text-sm text-primary-600 font-medium"
           >
             Ver todas las categorías →
