@@ -25,22 +25,14 @@ export default function LoginForm() {
     e.preventDefault();
     setLoading(true);
     setError(null);
-
     try {
       const res = await api.post('/auth/login', form);
       const { user, access_token } = res.data;
       setAuth(user, access_token);
-
-      if (user.role === 'ADMIN') {
-        router.push('/admin');
-      } else {
-        router.push('/');
-      }
+      router.push(user.role === 'ADMIN' ? '/admin' : '/');
     } catch (err: any) {
       const msg = err.response?.data?.message;
-      setError(
-        Array.isArray(msg) ? msg[0] : msg ?? 'Credenciales incorrectas',
-      );
+      setError(Array.isArray(msg) ? msg[0] : msg ?? 'Credenciales incorrectas');
     } finally {
       setLoading(false);
     }
@@ -48,18 +40,15 @@ export default function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-
-      {/* Error global */}
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">
           {error}
         </div>
       )}
 
-      {/* Email */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1.5">
-          Correo electr&#243;nico
+          Correo electrónico
         </label>
         <input
           type="email"
@@ -72,14 +61,13 @@ export default function LoginForm() {
         />
       </div>
 
-      {/* Password */}
       <div>
         <div className="flex items-center justify-between mb-1.5">
           <label className="block text-sm font-medium text-gray-700">
-            Contrase&#241;a
+            Contraseña
           </label>
           <Link href="#" className="text-xs text-primary-600 hover:text-primary-700">
-            &#191;Olvidaste tu contrase&#241;a?
+            ¿Olvidaste tu contraseña?
           </Link>
         </div>
         <div className="relative">
@@ -89,7 +77,7 @@ export default function LoginForm() {
             value={form.password}
             onChange={handleChange}
             required
-            placeholder="Tu contrase&#241;a"
+            placeholder="Tu contraseña"
             className="w-full px-4 py-2.5 pr-11 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
           />
           <button
@@ -97,23 +85,23 @@ export default function LoginForm() {
             onClick={() => setShowPassword(!showPassword)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
           >
-            {showPassword
-              ? <EyeSlashIcon className="w-5 h-5" />
-              : <EyeIcon className="w-5 h-5" />}
+            {showPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
           </button>
         </div>
       </div>
 
-      {/* Submit */}
       <button
         type="submit"
         disabled={loading}
         className="w-full bg-primary-600 text-white font-semibold py-3 rounded-xl hover:bg-primary-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
         {loading ? (
-          <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Ingresando...</>
+          <>
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            Ingresando...
+          </>
         ) : (
-          'Iniciar sesi&#243;n'
+          'Iniciar sesión'
         )}
       </button>
     </form>
