@@ -20,7 +20,7 @@ import {
 const navLinks = [
   { href: '/', label: 'Inicio' },
   { href: '/productos', label: 'Productos' },
-  { href: '/categorias', label: 'Categor&#237;as' },
+  { href: '/categorias', label: 'Categorías' },
 ];
 
 export default function Header() {
@@ -36,7 +36,6 @@ export default function Header() {
 
   useEffect(() => { setMounted(true); }, []);
 
-  // Cerrar dropdown al hacer click fuera
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -47,7 +46,6 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Cerrar menu movil al navegar
   useEffect(() => { setMobileOpen(false); }, [pathname]);
 
   const handleLogout = () => {
@@ -63,7 +61,7 @@ export default function Header() {
 
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <span className="text-2xl">&#127807;</span>
+            <span className="text-2xl">🌿</span>
             <span className="text-xl font-bold text-primary-700">Unicampo</span>
           </Link>
 
@@ -87,7 +85,6 @@ export default function Header() {
           {/* Acciones desktop */}
           <div className="hidden md:flex items-center gap-2">
 
-            {/* Buscar */}
             <Link
               href="/productos"
               className="p-2 text-gray-500 hover:text-primary-600 rounded-lg hover:bg-gray-50 transition-colors"
@@ -96,7 +93,6 @@ export default function Header() {
               <MagnifyingGlassIcon className="w-5 h-5" />
             </Link>
 
-            {/* Carrito */}
             <Link
               href="/carrito"
               className="relative p-2 text-gray-500 hover:text-primary-600 rounded-lg hover:bg-gray-50 transition-colors"
@@ -110,7 +106,6 @@ export default function Header() {
               )}
             </Link>
 
-            {/* Usuario */}
             {mounted && isAuthenticated ? (
               <div className="relative" ref={dropdownRef}>
                 <button
@@ -123,15 +118,11 @@ export default function Header() {
                   <span className="text-sm font-medium text-gray-700">
                     {user?.name.split(' ')[0]}
                   </span>
-                  <ChevronDownIcon className={`w-4 h-4 text-gray-400 transition-transform ${
-                    dropdownOpen ? 'rotate-180' : ''
-                  }`} />
+                  <ChevronDownIcon className={`w-4 h-4 text-gray-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 
-                {/* Dropdown */}
                 {dropdownOpen && (
                   <div className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-lg border border-gray-100 py-2 overflow-hidden">
-                    {/* Info usuario */}
                     <div className="px-4 py-2 border-b border-gray-100 mb-1">
                       <p className="text-sm font-semibold text-gray-800 truncate">{user?.name}</p>
                       <p className="text-xs text-gray-400 truncate">{user?.email}</p>
@@ -172,7 +163,7 @@ export default function Header() {
                         className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors"
                       >
                         <ArrowRightOnRectangleIcon className="w-4 h-4" />
-                        Cerrar sesi&#243;n
+                        Cerrar sesión
                       </button>
                     </div>
                   </div>
@@ -184,7 +175,7 @@ export default function Header() {
                   href="/auth/login"
                   className="text-sm font-medium text-gray-600 hover:text-primary-600 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  Iniciar sesi&#243;n
+                  Iniciar sesión
                 </Link>
                 <Link
                   href="/auth/registro"
@@ -196,7 +187,7 @@ export default function Header() {
             ) : null}
           </div>
 
-          {/* Botones m&#243;vil */}
+          {/* Botones móvil */}
           <div className="flex md:hidden items-center gap-2">
             <Link href="/carrito" className="relative p-2 text-gray-500">
               <ShoppingCartIcon className="w-5 h-5" />
@@ -218,7 +209,7 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Men&#250; m&#243;vil */}
+      {/* Menú móvil */}
       {mobileOpen && (
         <div className="md:hidden border-t border-gray-100 bg-white px-4 py-4 flex flex-col gap-1">
           {navLinks.map((link) => (
@@ -238,7 +229,6 @@ export default function Header() {
           <div className="border-t border-gray-100 mt-2 pt-3">
             {mounted && isAuthenticated ? (
               <div className="flex flex-col gap-1">
-                {/* Info */}
                 <div className="flex items-center gap-3 px-3 py-2 mb-1">
                   <div className="w-9 h-9 bg-primary-100 text-primary-700 rounded-full flex items-center justify-center font-bold">
                     {user?.name.charAt(0).toUpperCase()}
@@ -264,7 +254,7 @@ export default function Header() {
                   onClick={handleLogout}
                   className="flex items-center gap-3 text-sm text-red-500 py-2 px-3 rounded-xl hover:bg-red-50 text-left mt-1"
                 >
-                  <ArrowRightOnRectangleIcon className="w-4 h-4" /> Cerrar sesi&#243;n
+                  <ArrowRightOnRectangleIcon className="w-4 h-4" /> Cerrar sesión
                 </button>
               </div>
             ) : (
@@ -273,7 +263,7 @@ export default function Header() {
                   href="/auth/login"
                   className="block text-center border border-primary-600 text-primary-600 text-sm font-medium px-4 py-2.5 rounded-xl hover:bg-primary-50 transition-colors"
                 >
-                  Iniciar sesi&#243;n
+                  Iniciar sesión
                 </Link>
                 <Link
                   href="/auth/registro"
