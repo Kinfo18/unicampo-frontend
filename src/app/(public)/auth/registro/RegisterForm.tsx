@@ -39,12 +39,14 @@ export default function RegisterForm() {
         email: form.email,
         password: form.password,
       });
+      // Login automático tras registro
       const res = await api.post('/auth/login', {
         email: form.email,
         password: form.password,
       });
-      const { user, access_token } = res.data;
-      setAuth(user, access_token);
+      // El backend devuelve { user, token } (no access_token)
+      const { user, token } = res.data;
+      setAuth(user, token);
       router.push('/');
     } catch (err: any) {
       const msg = err.response?.data?.message;
@@ -64,47 +66,26 @@ export default function RegisterForm() {
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1.5">Nombre completo</label>
-        <input
-          type="text"
-          name="name"
-          value={form.name}
-          onChange={handleChange}
-          required
+        <input type="text" name="name" value={form.name} onChange={handleChange} required
           placeholder="Tu nombre"
-          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
-        />
+          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition" />
       </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1.5">Correo electrónico</label>
-        <input
-          type="email"
-          name="email"
-          value={form.email}
-          onChange={handleChange}
-          required
+        <input type="email" name="email" value={form.email} onChange={handleChange} required
           placeholder="tu@correo.com"
-          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
-        />
+          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition" />
       </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1.5">Contraseña</label>
         <div className="relative">
-          <input
-            type={showPassword ? 'text' : 'password'}
-            name="password"
-            value={form.password}
-            onChange={handleChange}
-            required
-            placeholder="Mínimo 6 caracteres"
-            className="w-full px-4 py-2.5 pr-11 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-          >
+          <input type={showPassword ? 'text' : 'password'} name="password" value={form.password}
+            onChange={handleChange} required placeholder="Mínimo 6 caracteres"
+            className="w-full px-4 py-2.5 pr-11 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition" />
+          <button type="button" onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
             {showPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
           </button>
         </div>
@@ -113,45 +94,26 @@ export default function RegisterForm() {
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1.5">Confirmar contraseña</label>
         <div className="relative">
-          <input
-            type={showConfirm ? 'text' : 'password'}
-            name="confirmPassword"
-            value={form.confirmPassword}
-            onChange={handleChange}
-            required
-            placeholder="Repite tu contraseña"
-            className="w-full px-4 py-2.5 pr-11 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
-          />
-          <button
-            type="button"
-            onClick={() => setShowConfirm(!showConfirm)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-          >
+          <input type={showConfirm ? 'text' : 'password'} name="confirmPassword" value={form.confirmPassword}
+            onChange={handleChange} required placeholder="Repite tu contraseña"
+            className="w-full px-4 py-2.5 pr-11 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition" />
+          <button type="button" onClick={() => setShowConfirm(!showConfirm)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
             {showConfirm ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
           </button>
         </div>
         {form.confirmPassword && (
           <p className={`text-xs mt-1.5 ${form.password === form.confirmPassword ? 'text-green-600' : 'text-red-500'}`}>
-            {form.password === form.confirmPassword
-              ? '✓ Las contraseñas coinciden'
-              : '✗ Las contraseñas no coinciden'}
+            {form.password === form.confirmPassword ? '✓ Las contraseñas coinciden' : '✗ Las contraseñas no coinciden'}
           </p>
         )}
       </div>
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full bg-primary-600 text-white font-semibold py-3 rounded-xl hover:bg-primary-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-      >
+      <button type="submit" disabled={loading}
+        className="w-full bg-primary-600 text-white font-semibold py-3 rounded-xl hover:bg-primary-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
         {loading ? (
-          <>
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            Creando cuenta...
-          </>
-        ) : (
-          'Crear cuenta'
-        )}
+          <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Creando cuenta...</>
+        ) : 'Crear cuenta'}
       </button>
     </form>
   );

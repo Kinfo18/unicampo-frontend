@@ -27,8 +27,9 @@ export default function LoginForm() {
     setError(null);
     try {
       const res = await api.post('/auth/login', form);
-      const { user, access_token } = res.data;
-      setAuth(user, access_token);
+      // El backend devuelve { user, token } (no access_token)
+      const { user, token } = res.data;
+      setAuth(user, token);
       router.push(user.role === 'ADMIN' ? '/admin' : '/');
     } catch (err: any) {
       const msg = err.response?.data?.message;
@@ -63,9 +64,7 @@ export default function LoginForm() {
 
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <label className="block text-sm font-medium text-gray-700">
-            Contraseña
-          </label>
+          <label className="block text-sm font-medium text-gray-700">Contraseña</label>
           <Link href="#" className="text-xs text-primary-600 hover:text-primary-700">
             ¿Olvidaste tu contraseña?
           </Link>
@@ -96,10 +95,7 @@ export default function LoginForm() {
         className="w-full bg-primary-600 text-white font-semibold py-3 rounded-xl hover:bg-primary-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
         {loading ? (
-          <>
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            Ingresando...
-          </>
+          <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Ingresando...</>
         ) : (
           'Iniciar sesión'
         )}
