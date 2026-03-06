@@ -41,7 +41,7 @@ export default function AdminPedidosPage() {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: '15' });
     if (statusFilter) params.set('status', statusFilter);
-    api.get(`/orders/admin/all?${params}`)
+    api.get(`/admin/orders?${params}`)
       .then((r) => {
         setOrders(r.data.data);
         setMeta(r.data.meta);
@@ -82,7 +82,6 @@ export default function AdminPedidosPage() {
         </div>
       </div>
 
-      {/* Filtros */}
       <div className="flex items-center gap-2 mb-5 flex-wrap">
         <FunnelIcon className="w-4 h-4 text-gray-400 shrink-0" />
         {STATUS_FILTERS.map((f) => (
