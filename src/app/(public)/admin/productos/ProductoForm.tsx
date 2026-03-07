@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeftIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, PlusIcon, XMarkIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import api from '@/lib/api';
 
 interface Category { id: string; name: string; }
@@ -18,18 +18,20 @@ export default function ProductoForm({ mode, product }: ProductoFormProps) {
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
   const [form, setForm] = useState({
-    name: '',
-    description: '',
-    price: '',
-    categoryId: '',
-    initialStock: '',
-    minStock: '5',
-    isActive: true,
-    images: [] as string[],
+    name: '', description: '', price: '', categoryId: '',
+    initialStock: '', minStock: '5', isActive: true, images: [] as string[],
   });
   const [imageInput, setImageInput] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving]       = useState(false);
+  const [error, setError]         = useState<string | null>(null);
+
+  // Reabastecimiento (solo modo edit)
+  const [restockUnits, setRestockUnits]     = useState('');
+  const [restockMin, setRestockMin]         = useState('');
+  const [restocking, setRestocking]         = useState(false);
+  const [restockSuccess, setRestockSuccess] = useState<string | null>(null);
+  const [restockError, setRestockError]     = useState<string | null>(null);
+  const [currentStock, setCurrentStock]     = useState<number | null>(null);
 
   useEffect(() => {
     api.get('/categories').then((r) => setCategories(r.data.data ?? r.data)).catch(() => {});
@@ -47,6 +49,8 @@ export default function ProductoForm({ mode, product }: ProductoFormProps) {
         isActive: product.isActive ?? true,
         images: product.images ?? [],
       });
+      setCurrentStock(product.inventory?.quantity ?? 0);
+      setRestockMin(String(product.inventory?.minStock ?? '5'));
     }
   }, [mode, product]);
 
@@ -56,18 +60,15 @@ export default function ProductoForm({ mode, product }: ProductoFormProps) {
     setForm((p) => ({ ...p, images: [...p.images, url] }));
     setImageInput('');
   };
-
   const removeImage = (idx: number) =>
     setForm((p) => ({ ...p, images: p.images.filter((_, i) => i !== idx) }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim()) { setError('El nombre es obligatorio'); return; }
+    if (!form.name.trim())              { setError('El nombre es obligatorio'); return; }
     if (!form.price || Number(form.price) <= 0) { setError('El precio debe ser mayor a 0'); return; }
-    if (!form.categoryId) { setError('Selecciona una categoría'); return; }
-
-    setSaving(true);
-    setError(null);
+    if (!form.categoryId)               { setError('Selecciona una categoría'); return; }
+    setSaving(true); setError(null);
     try {
       const payload: any = {
         name: form.name.trim(),
@@ -79,7 +80,7 @@ export default function ProductoForm({ mode, product }: ProductoFormProps) {
       };
       if (mode === 'create') {
         payload.initialStock = form.initialStock ? Number(form.initialStock) : 0;
-        payload.minStock = form.minStock ? Number(form.minStock) : 5;
+        payload.minStock     = form.minStock ? Number(form.minStock) : 5;
         await api.post('/products', payload);
       } else {
         await api.patch(`/products/${product.id}`, payload);
@@ -90,6 +91,28 @@ export default function ProductoForm({ mode, product }: ProductoFormProps) {
       setError(Array.isArray(msg) ? msg[0] : msg ?? 'Error al guardar el producto');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleRestock = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const units = Number(restockUnits);
+    if (!units || units <= 0) { setRestockError('Ingresa un número de unidades válido'); return; }
+    setRestocking(true); setRestockError(null); setRestockSuccess(null);
+    try {
+      const payload: any = { units };
+      if (restockMin && Number(restockMin) > 0) payload.minStock = Number(restockMin);
+      const res = await api.patch(`/products/${product.id}/stock`, payload);
+      const { currentStock: newStock, addedUnits } = res.data;
+      setCurrentStock(newStock);
+      setRestockSuccess(`✅ +${addedUnits} unidades agregadas. Stock actual: ${newStock}`);
+      setRestockUnits('');
+      setTimeout(() => setRestockSuccess(null), 4000);
+    } catch (err: any) {
+      const msg = err.response?.data?.message;
+      setRestockError(Array.isArray(msg) ? msg[0] : msg ?? 'Error al reabastecer');
+    } finally {
+      setRestocking(false);
     }
   };
 
@@ -105,7 +128,6 @@ export default function ProductoForm({ mode, product }: ProductoFormProps) {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
-
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">{error}</div>
         )}
@@ -113,7 +135,6 @@ export default function ProductoForm({ mode, product }: ProductoFormProps) {
         {/* Información básica */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
           <h2 className="font-bold text-gray-800">Información básica</h2>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Nombre <span className="text-red-500">*</span></label>
             <input type="text" value={form.name}
@@ -121,7 +142,6 @@ export default function ProductoForm({ mode, product }: ProductoFormProps) {
               placeholder="Ej: Papa criolla fresca"
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition" />
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Descripción</label>
             <textarea value={form.description}
@@ -129,7 +149,6 @@ export default function ProductoForm({ mode, product }: ProductoFormProps) {
               rows={3} placeholder="Descripción del producto..."
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition resize-none" />
           </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Precio (COP) <span className="text-red-500">*</span></label>
@@ -148,7 +167,6 @@ export default function ProductoForm({ mode, product }: ProductoFormProps) {
               </select>
             </div>
           </div>
-
           <div className="flex items-center gap-3 pt-1">
             <button type="button"
               onClick={() => setForm((p) => ({ ...p, isActive: !p.isActive }))}
@@ -163,7 +181,7 @@ export default function ProductoForm({ mode, product }: ProductoFormProps) {
           </div>
         </div>
 
-        {/* Inventario — solo en creación */}
+        {/* Inventario inicial — solo creación */}
         {mode === 'create' && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
             <h2 className="font-bold text-gray-800">Inventario inicial</h2>
@@ -186,11 +204,66 @@ export default function ProductoForm({ mode, product }: ProductoFormProps) {
           </div>
         )}
 
+        {/* Reabastecimiento — solo edición */}
+        {mode === 'edit' && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="font-bold text-gray-800">Inventario</h2>
+              <span className={`text-sm font-semibold px-3 py-1 rounded-full ${
+                (currentStock ?? 0) === 0
+                  ? 'bg-red-100 text-red-600'
+                  : (currentStock ?? 0) <= 5
+                  ? 'bg-orange-100 text-orange-600'
+                  : 'bg-green-100 text-green-700'
+              }`}>
+                Stock actual: {currentStock ?? 0} unidades
+              </span>
+            </div>
+
+            {restockSuccess && (
+              <div className="bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-3 rounded-xl">
+                {restockSuccess}
+              </div>
+            )}
+            {restockError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">
+                {restockError}
+              </div>
+            )}
+
+            <form onSubmit={handleRestock} className="space-y-3">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Unidades a agregar <span className="text-red-500">*</span>
+                  </label>
+                  <input type="number" value={restockUnits} min="1"
+                    onChange={(e) => setRestockUnits(e.target.value)}
+                    placeholder="Ej: 50"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Stock mínimo (alerta)</label>
+                  <input type="number" value={restockMin} min="1"
+                    onChange={(e) => setRestockMin(e.target.value)}
+                    placeholder="5"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition" />
+                </div>
+              </div>
+              <button type="submit" disabled={restocking || !restockUnits}
+                className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition-colors disabled:opacity-50">
+                {restocking
+                  ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Agregando...</>
+                  : <><ArrowPathIcon className="w-4 h-4" /> Reabastecer stock</>}
+              </button>
+            </form>
+          </div>
+        )}
+
         {/* Imágenes */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
           <h2 className="font-bold text-gray-800">Imágenes</h2>
           <p className="text-xs text-gray-400">Ingresa URLs de imágenes (Cloudinary, Imgur, etc.)</p>
-
           <div className="flex gap-2">
             <input type="url" value={imageInput}
               onChange={(e) => setImageInput(e.target.value)}
@@ -202,7 +275,6 @@ export default function ProductoForm({ mode, product }: ProductoFormProps) {
               <PlusIcon className="w-4 h-4" /> Agregar
             </button>
           </div>
-
           {form.images.length > 0 && (
             <div className="flex flex-wrap gap-3">
               {form.images.map((url, idx) => (
