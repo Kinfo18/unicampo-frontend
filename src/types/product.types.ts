@@ -38,9 +38,15 @@ export interface ProductsResponse {
     };
 }
 
+export type ProductSortBy = 'newest' | 'price_asc' | 'price_desc' | 'best_seller';
+
 export interface ProductQuery {
     search?: string;
     categoryId?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    sortBy?: ProductSortBy;
+    inStock?: boolean;
     page?: number;
     limit?: number;
 }
