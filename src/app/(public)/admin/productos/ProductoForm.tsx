@@ -94,8 +94,8 @@ export default function ProductoForm({ mode, product }: ProductoFormProps) {
     }
   };
 
-  const handleRestock = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Sin FormEvent — se llama desde onClick de un button type="button"
+  const handleRestock = async () => {
     const units = Number(restockUnits);
     if (!units || units <= 0) { setRestockError('Ingresa un número de unidades válido'); return; }
     setRestocking(true); setRestockError(null); setRestockSuccess(null);
@@ -204,7 +204,7 @@ export default function ProductoForm({ mode, product }: ProductoFormProps) {
           </div>
         )}
 
-        {/* Reabastecimiento — solo edición */}
+        {/* Reabastecimiento — solo edición. Usa div en vez de form para evitar form anidado */}
         {mode === 'edit' && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
             <div className="flex items-center justify-between">
@@ -231,7 +231,8 @@ export default function ProductoForm({ mode, product }: ProductoFormProps) {
               </div>
             )}
 
-            <form onSubmit={handleRestock} className="space-y-3">
+            {/* div en lugar de form — evita <form> anidado */}
+            <div className="space-y-3">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -239,6 +240,7 @@ export default function ProductoForm({ mode, product }: ProductoFormProps) {
                   </label>
                   <input type="number" value={restockUnits} min="1"
                     onChange={(e) => setRestockUnits(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleRestock())}
                     placeholder="Ej: 50"
                     className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition" />
                 </div>
@@ -250,13 +252,16 @@ export default function ProductoForm({ mode, product }: ProductoFormProps) {
                     className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition" />
                 </div>
               </div>
-              <button type="submit" disabled={restocking || !restockUnits}
+              <button
+                type="button"
+                onClick={handleRestock}
+                disabled={restocking || !restockUnits}
                 className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition-colors disabled:opacity-50">
                 {restocking
                   ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Agregando...</>
                   : <><ArrowPathIcon className="w-4 h-4" /> Reabastecer stock</>}
               </button>
-            </form>
+            </div>
           </div>
         )}
 
