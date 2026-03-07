@@ -7,7 +7,7 @@ import {
   FunnelIcon,
 } from '@heroicons/react/24/outline';
 import api from '@/lib/api';
-import OrderStatusSelect from '@/components/ui/OrderStatusSelect';
+import OrderStatusSelect, { type OrderStatus } from '@/components/ui/OrderStatusSelect';
 
 const STATUS_FILTERS = [
   { value: '', label: 'Todos' },
@@ -53,15 +53,23 @@ export default function AdminPedidosPage() {
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
   useEffect(() => { setPage(1); }, [statusFilter]);
 
-  const handleStatusChange = async (orderId: string, newStatus: string) => {
+  const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
     setUpdatingId(orderId);
     try {
       await api.patch(`/orders/${orderId}/status`, { status: newStatus });
-      setOrders((prev) =>
-        prev.map((o) => o.id === orderId ? { ...o, status: newStatus } : o)
-      );
+
+      // Si hay filtro activo y el nuevo estado no coincide, quitar el pedido de la lista
+      if (statusFilter && newStatus !== statusFilter) {
+        setOrders((prev) => prev.filter((o) => o.id !== orderId));
+        setMeta((m) => ({ ...m, total: Math.max(0, m.total - 1) }));
+      } else {
+        // Sin filtro activo: actualizar el estado en el mismo lugar
+        setOrders((prev) =>
+          prev.map((o) => o.id === orderId ? { ...o, status: newStatus } : o)
+        );
+      }
     } catch {
-      alert('Error al actualizar el estado');
+      alert('Error al actualizar el estado. Inténtalo de nuevo.');
     } finally {
       setUpdatingId(null);
     }
