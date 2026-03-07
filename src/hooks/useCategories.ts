@@ -11,7 +11,11 @@ export function useCategories() {
     useEffect(() => {
         api
             .get('/categories')
-            .then((res) => setCategories(res.data))
+            .then((res) => {
+                // La API devuelve array directo (sin paginación)
+                const data = Array.isArray(res.data) ? res.data : (res.data?.data ?? []);
+                setCategories(data);
+            })
             .catch(console.error)
             .finally(() => setLoading(false));
     }, []);

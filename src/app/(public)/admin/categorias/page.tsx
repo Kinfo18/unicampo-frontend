@@ -27,9 +27,14 @@ export default function AdminCategoriasPage() {
 
   const fetchCategories = () => {
     setLoading(true);
-    api.get('/categories').then((r) => {
-      setCategories(r.data.data ?? r.data);
-    }).catch(() => {}).finally(() => setLoading(false));
+    api.get('/categories')
+      .then((r) => {
+        // API devuelve array directo
+        const data = Array.isArray(r.data) ? r.data : (r.data?.data ?? []);
+        setCategories(data);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => { fetchCategories(); }, []);
@@ -78,7 +83,6 @@ export default function AdminCategoriasPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {categories.map((cat) => (
             <div key={cat.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden group">
-              {/* Imagen */}
               <div className="relative h-32 bg-primary-50">
                 {cat.imageUrl ? (
                   <Image src={cat.imageUrl} alt={cat.name} fill className="object-cover" />
@@ -88,8 +92,6 @@ export default function AdminCategoriasPage() {
                   </div>
                 )}
               </div>
-
-              {/* Info */}
               <div className="p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">

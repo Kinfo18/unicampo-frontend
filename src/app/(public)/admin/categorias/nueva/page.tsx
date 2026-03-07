@@ -1,3 +1,4 @@
+'use client';
 import CategoriaForm from '../CategoriaForm';
 
 export default function NuevaCategoriaPage() {
