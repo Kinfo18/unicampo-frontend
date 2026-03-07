@@ -41,7 +41,7 @@ export default function AdminPedidosPage() {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: '15' });
     if (statusFilter) params.set('status', statusFilter);
-    api.get(`/admin/orders?${params}`)
+    api.get(`/orders/all?${params}`)
       .then((r) => {
         setOrders(r.data.data);
         setMeta(r.data.meta);
