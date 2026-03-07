@@ -1,19 +1,17 @@
 'use client';
 
 import { useEffect, useState, useCallback, Fragment } from 'react';
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  FunnelIcon,
-} from '@heroicons/react/24/outline';
+import { ChevronLeftIcon, ChevronRightIcon, FunnelIcon } from '@heroicons/react/24/outline';
 import api from '@/lib/api';
-import OrderStatusSelect, { type OrderStatus } from '@/components/ui/OrderStatusSelect';
+import OrderStatusSelect, { type OrderStatus, META } from '@/components/ui/OrderStatusSelect';
+import ConfirmModal from '@/components/ui/ConfirmModal';
+import { ToastContainer, toast } from '@/components/ui/Toast';
 
 const STATUS_FILTERS = [
   { value: '', label: 'Todos' },
-  { value: 'PENDING', label: 'Pendiente' },
+  { value: 'PENDING',   label: 'Pendiente' },
   { value: 'CONFIRMED', label: 'Confirmado' },
-  { value: 'SHIPPED', label: 'Enviado' },
+  { value: 'SHIPPED',   label: 'Enviado' },
   { value: 'DELIVERED', label: 'Entregado' },
   { value: 'CANCELLED', label: 'Cancelado' },
 ];
@@ -28,24 +26,27 @@ interface Order {
   items: { quantity: number; unitPrice: string; product: { name: string; images: string[] } }[];
 }
 
+interface PendingChange {
+  orderId: string;
+  nextStatus: OrderStatus;
+}
+
 export default function AdminPedidosPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [meta, setMeta] = useState({ total: 0, page: 1, totalPages: 1 });
-  const [loading, setLoading] = useState(true);
+  const [orders, setOrders]           = useState<Order[]>([]);
+  const [meta, setMeta]               = useState({ total: 0, page: 1, totalPages: 1 });
+  const [loading, setLoading]         = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
-  const [page, setPage] = useState(1);
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [page, setPage]               = useState(1);
+  const [updatingId, setUpdatingId]   = useState<string | null>(null);
+  const [expanded, setExpanded]       = useState<string | null>(null);
+  const [pending, setPending]         = useState<PendingChange | null>(null);
 
   const fetchOrders = useCallback(() => {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: '15' });
     if (statusFilter) params.set('status', statusFilter);
     api.get(`/orders/all?${params}`)
-      .then((r) => {
-        setOrders(r.data.data);
-        setMeta(r.data.meta);
-      })
+      .then((r) => { setOrders(r.data.data); setMeta(r.data.meta); })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [page, statusFilter]);
@@ -53,23 +54,32 @@ export default function AdminPedidosPage() {
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
   useEffect(() => { setPage(1); }, [statusFilter]);
 
-  const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
+  // El select llama a esto; abrimos el modal en lugar de confirm()
+  const handleRequestChange = (orderId: string, nextStatus: OrderStatus) => {
+    setPending({ orderId, nextStatus });
+  };
+
+  // Usuario confirmó en el modal
+  const handleConfirm = async () => {
+    if (!pending) return;
+    const { orderId, nextStatus } = pending;
+    setPending(null);
     setUpdatingId(orderId);
     try {
-      await api.patch(`/orders/${orderId}/status`, { status: newStatus });
-
-      // Si hay filtro activo y el nuevo estado no coincide, quitar el pedido de la lista
-      if (statusFilter && newStatus !== statusFilter) {
+      await api.patch(`/orders/${orderId}/status`, { status: nextStatus });
+      if (statusFilter && nextStatus !== statusFilter) {
         setOrders((prev) => prev.filter((o) => o.id !== orderId));
         setMeta((m) => ({ ...m, total: Math.max(0, m.total - 1) }));
       } else {
-        // Sin filtro activo: actualizar el estado en el mismo lugar
-        setOrders((prev) =>
-          prev.map((o) => o.id === orderId ? { ...o, status: newStatus } : o)
-        );
+        setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, status: nextStatus } : o));
       }
+      toast(
+        nextStatus === 'CANCELLED' ? 'warning' : 'success',
+        nextStatus === 'CANCELLED' ? 'Pedido cancelado' : 'Estado actualizado',
+        `Pedido cambiado a "${META[nextStatus]?.label}"`
+      );
     } catch {
-      alert('Error al actualizar el estado. Inténtalo de nuevo.');
+      toast('error', 'Error al actualizar', 'No se pudo cambiar el estado. Inténtalo de nuevo.');
     } finally {
       setUpdatingId(null);
     }
@@ -81,8 +91,27 @@ export default function AdminPedidosPage() {
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
+  const isCancelling = pending?.nextStatus === 'CANCELLED';
+
   return (
     <div>
+      <ToastContainer />
+
+      {/* Modal de confirmacion */}
+      <ConfirmModal
+        open={!!pending}
+        title={isCancelling ? 'Cancelar pedido' : 'Cambiar estado'}
+        message={
+          isCancelling
+            ? 'Esta acción no se puede deshacer. El pedido quedará cancelado permanentemente.'
+            : `¿Confirmar cambio de estado a "${META[pending?.nextStatus as OrderStatus]?.label}"?`
+        }
+        confirmLabel={isCancelling ? 'Sí, cancelar' : 'Confirmar'}
+        danger={isCancelling}
+        onConfirm={handleConfirm}
+        onCancel={() => setPending(null)}
+      />
+
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Pedidos</h1>
@@ -147,7 +176,7 @@ export default function AdminPedidosPage() {
                         <OrderStatusSelect
                           value={order.status}
                           disabled={updatingId === order.id}
-                          onChange={(val) => handleStatusChange(order.id, val)}
+                          onRequestChange={(next) => handleRequestChange(order.id, next)}
                         />
                       </td>
                       <td className="px-4 py-3 text-center">
